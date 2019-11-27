@@ -3,38 +3,46 @@
 		<block v-for='(item, index) in nodes' v-bind:key='index'>
 			<!--#ifdef MP-WEIXIN || MP-QQ || APP-PLUS || MP-ALIPAY-->
 			<block v-if="handler.isContinue(item)">
+			<!--#endif-->
+			<!--#ifdef MP-BAIDU || MP-TOUTIAO || H5-->
+			<block v-if="!item.continue">
 				<!--#endif-->
-				<!--#ifdef MP-BAIDU || MP-TOUTIAO || H5-->
-				<block v-if="!item.continue">
-					<!--#endif-->
-					<!--图片-->
+				<!--图片-->
+				<template v-if="item.name=='img'">
 					<!--#ifdef MP-WEIXIN || MP-QQ || APP-PLUS-->
-					<rich-text v-if="item.name=='img'" class="img" :style="'text-indent:0;'+handler.getStyle(item.attrs.style,'inline-block')"
+					<rich-text class="img" :style="'text-indent:0;'+handler.getStyle(item.attrs.style,'inline-block')"
 					 :nodes='handler.setImgStyle(item,imgMode,imgLoad)' :data-ignore='item.attrs.ignore' :data-src='item.attrs.src'
 					 :data-current='item.current' @tap='previewEvent' />
 					<!--#endif-->
 					<!--#ifdef MP-ALIPAY-->
-					<rich-text v-if="item.name=='img'" :style="'text-indent:0;'+handler.getStyle(item.attrs.style,'inline-block')"
+					<rich-text :style="'text-indent:0;'+handler.getStyle(item.attrs.style,'inline-block')"
 					 :nodes='handler.setImgStyle(item,imgMode)' :data-ignore='item.attrs.ignore' :data-src='item.attrs.src'
 					 :data-current='item.current' @tap='previewEvent' />
 					<!--#endif-->
 					<!--#ifdef MP-BAIDU || MP-TOUTIAO || H5-->
-					<rich-text v-if="item.name=='img'" :style="'text-indent:0;'+item.attrs.containStyle" :nodes='[item]' :data-ignore='item.attrs.ignore'
+					<rich-text :style="'text-indent:0;'+item.attrs.containStyle" :nodes='[item]' :data-ignore='item.attrs.ignore'
 					 :data-src='item.attrs.src' :data-current='item.current' @tap='previewEvent' />
 					<!--#endif-->
-					<!--文本-->
+				</template>
+				<!--文本-->
+				<template v-else-if="item.name=='text'">
 					<!--#ifdef MP-WEIXIN || MP-QQ || H5 || APP-PLUS-->
-					<block v-else-if="item.type=='text'">
+					<block>
 						<text v-if="!item.decode" decode>{{item.text}}</text>
 						<rich-text v-else style="display:inline-block" :nodes="[item]"></rich-text>
 					</block>
 					<!--#endif-->
 					<!--#ifdef MP-ALIPAY-->
-					<text v-else-if="item.type=='text'" decode>{{item.text}}</text>
+					<text decode>{{item.text}}</text>
 					<!--#endif-->
-					<text v-else-if="item.name=='br'">\n</text>
-					<!--视频-->
-					<block v-else-if="item.name=='video'">
+				</template>
+				<!--换行-->
+				<template v-else-if="item.name=='br'">
+					<text>\n</text>
+				</template>
+				<!--视频-->
+				<template v-else-if="item.name=='video'">
+					<block>
 						<!--#ifdef APP-PLUS-->
 						<view v-if="(!loadVideo||item.attrs.id[item.attrs.id.length-1]>'3')&&(!controls[item.attrs.id]||!controls[item.attrs.id].play)"
 						 :class="'pvideo '+(item.attrs.class||'')" :style="item.attrs.style" :data-id="item.attrs.id" @tap="_loadVideo">
@@ -52,13 +60,17 @@
 						 :unit-id="item.attrs['unit-id']" :class="'v '+(item.attrs.class||'')" :muted="item.attrs.muted" :style="item.attrs.style"
 						 :data-id="item.attrs.id" :data-source="item.attrs.source" @play='playEvent' @error="videoError" />
 					</block>
-					<!--音频-->
-					<audio v-else-if="item.name=='audio'" :src='controls[item.attrs.id]?item.attrs.source[controls[item.attrs.id].index]:item.attrs.src'
+				</template>
+				<!--音频-->
+				<template v-else-if="item.name=='audio'">
+					<audio :src='controls[item.attrs.id]?item.attrs.source[controls[item.attrs.id].index]:item.attrs.src'
 					 :id="item.attrs.id" :loop='item.attrs.loop' :controls='item.attrs.controls' :poster='item.attrs.poster' :name='item.attrs.name'
 					 :author='item.attrs.author' :class="item.attrs.class||''" :style="item.attrs.style" :data-id="item.attrs.id"
 					 :data-source="item.attrs.source" @error="audioError" />
-					<!--链接-->
-					<view v-else-if="item.name=='a'" :class="'a '+(item.attrs.class||'')" :style="item.attrs.style" :data-href='item.attrs.href'
+				</template>
+				<!--链接-->
+				<template v-else-if="item.name=='a'">
+					<view :class="'a '+(item.attrs.class||'')" :style="item.attrs.style" :data-href='item.attrs.href'
 					 hover-class="navigator-hover" :hover-start-time="25" :hover-stay-time="300" @tap="tapEvent">
 						<!--#ifdef H5-->
 						<trees :nodes="item.children" :imgMode="imgMode" />
@@ -67,33 +79,40 @@
 						<trees :nodes="item.children" :imgMode="imgMode" :lazyLoad="lazyLoad" :loadVideo="loadVideo" />
 						<!--#endif-->
 					</view>
-					<!--广告-->
+				</template>
+				<!--广告-->
+				<template v-else-if="item.name=='ad'">
 					<!--#ifdef MP-WEIXIN || MP-QQ-->
-					<ad v-else-if="item.name=='ad'" :unit-id="item.attrs['unit-id']" :class="item.attrs.class||''" :style="item.attrs.style"
+					<ad :unit-id="item.attrs['unit-id']" :class="item.attrs.class||''" :style="item.attrs.style"
 					 @error="adError"></ad>
 					<!--#endif-->
 					<!--#ifdef MP-BAIDU-->
-					<ad v-else-if="item.name=='ad'" :appid="item.attrs.appid" :apid="item.attrs.apid" :type="item.attrs.type" :class="item.attrs.class||''"
+					<ad :appid="item.attrs.appid" :apid="item.attrs.apid" :type="item.attrs.type" :class="item.attrs.class||''"
 					 :style="item.attrs.style" @error="adError"></ad>
 					<!--#endif-->
-					<!--富文本-->
+				</template>
+				<!--富文本-->
+				<template v-else>
 					<!--#ifdef MP-WEIXIN || MP-QQ || MP-ALIPAY || APP-PLUS-->
-					<rich-text v-else :class="item.name" :style="''+handler.getStyle(item.attrs.style,'block')" :nodes="handler.setStyle(item)" />
+					<rich-text :class="item.name" :style="''+handler.getStyle(item.attrs.style,'block')" :nodes="handler.setStyle(item)" />
 					<!--#endif-->
 					<!--#ifdef MP-BAIDU || MP-TOUTIAO || H5-->
-					<rich-text v-else :class="item.name" :style="item.attrs?item.attrs.containStyle:''" :nodes="[item]" />
+					<rich-text :class="item.name" :style="item.attrs?item.attrs.containStyle:''" :nodes="[item]" />
 					<!--#endif-->
-				</block>
+				</template>
+			</block>
+			<template v-else>
 				<!--#ifdef MP-ALIPAY || H5-->
-				<view v-else :class="item.name+' '+(item.attrs.class||'')" :style="item.attrs.style">
+				<view :class="item.name+' '+(item.attrs.class||'')" :style="item.attrs.style">
 					<trees :nodes="item.children" :imgMode="imgMode" />
 				</view>
 				<!--#endif-->
 				<!--#ifndef MP-ALIPAY || H5-->
-				<trees v-else :class="item.name+' '+(item.attrs.class||'')" :style="item.attrs.style" :nodes="item.children"
+				<trees :class="item.name+' '+(item.attrs.class||'')" :style="item.attrs.style" :nodes="item.children"
 				 :imgMode="imgMode" :lazyLoad="lazyLoad" :loadVideo="loadVideo" />
 				<!--#endif-->
-			</block>
+			</template>
+		</block>
 	</view>
 </template>
 <script module="handler" lang="wxs" src="./handler.wxs"></script>
